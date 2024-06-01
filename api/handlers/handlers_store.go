@@ -23,12 +23,7 @@ func NewStoreHandler(db *db.Db) *StoreHandler {
 }
 
 func (s *StoreHandler) HandleDeleteItem(w http.ResponseWriter, r *http.Request) {
-	key, err := handlerutils.ExtractKey(r.URL.Path)
-	if err != nil {
-		log.Println(err)
-		http.Error(w, err.Error(), http.StatusBadRequest)
-		return
-	}
+	key := handlerutils.ExtractKey(r.URL.Path)
 
 	if err := s.Db.DeleteItem(key); err != nil {
 		http.Error(w, err.Error(), http.StatusNotFound)
@@ -41,12 +36,7 @@ func (s *StoreHandler) HandleDeleteItem(w http.ResponseWriter, r *http.Request) 
 func (s *StoreHandler) HandleGetItem(w http.ResponseWriter, r *http.Request) {
 	// I tried PathValue but seems like it's not compatible with
 	// httptest library. I manually extract the key here
-	key, err := handlerutils.ExtractKey(r.URL.Path)
-	if err != nil {
-		log.Println(err)
-		http.Error(w, err.Error(), http.StatusBadRequest)
-		return
-	}
+	key := handlerutils.ExtractKey(r.URL.Path)
 
 	value, err := s.Db.SelectItem(key)
 	if err != nil {

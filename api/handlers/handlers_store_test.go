@@ -71,10 +71,6 @@ func TestHandlePostItem(t *testing.T) {
 			req.Header.Set("Content-Type", test.contentType)
 			StoreHandlerTest.HandlePostItem(rr, req)
 			resp := rr.Result()
-			// resp, err := HttpClientTest.Post(server.URL+"/store", test.header, bytes.NewBuffer(body))
-			// if err != nil {
-			// 	t.Fatal(err)
-			// }
 
 			if resp.StatusCode != test.expectedStatus {
 				t.Fatalf("expected status: %d\treceived: %d", test.expectedStatus, resp.StatusCode)
@@ -91,9 +87,6 @@ func TestHandlePostItem(t *testing.T) {
 }
 
 func TestHandleGetItem(t *testing.T) {
-	server := httptest.NewServer(http.HandlerFunc(StoreHandlerTest.HandleGetItem))
-	defer server.Close()
-
 	tests := []Test{
 		{
 			name:           "get item w valid key",
@@ -107,18 +100,17 @@ func TestHandleGetItem(t *testing.T) {
 		},
 		{
 			name:           "invalid url no key",
-			expectedStatus: http.StatusBadRequest,
+			expectedStatus: http.StatusNotFound,
 			urlKey:         "",
 		},
 	}
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			url := fmt.Sprintf("%s/retrieve/%s", server.URL, test.urlKey)
-			resp, err := HttpClientTest.Get(url)
-			if err != nil {
-				t.Fatal(err)
-			}
+			w := httptest.NewRecorder()
+			req := httptest.NewRequest(http.MethodGet, "/retrieve/"+test.urlKey, nil)
+			StoreHandlerTest.HandleGetItem(w, req)
+			resp := w.Result()
 
 			if resp.StatusCode != test.expectedStatus {
 				t.Fatalf("expected status: %d\treceived: %d", test.expectedStatus, resp.StatusCode)
@@ -134,13 +126,10 @@ func TestHandleGetItem(t *testing.T) {
 }
 
 func TestHandleDeleteItem(t *testing.T) {
-	server := httptest.NewServer(http.HandlerFunc(StoreHandlerTest.HandleDeleteItem))
-	defer server.Close()
-
 	tests := []Test{
 		{
 			name:           "invalid url no key",
-			expectedStatus: http.StatusBadRequest,
+			expectedStatus: http.StatusNotFound,
 			urlKey:         "",
 		},
 		{
@@ -157,16 +146,10 @@ func TestHandleDeleteItem(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			url := fmt.Sprintf("%s/delete-item/%s", server.URL, test.urlKey)
-			req, err := http.NewRequest(http.MethodDelete, url, nil)
-			if err != nil {
-				t.Fatal(err)
-			}
-
-			resp, err := HttpClientTest.Do(req)
-			if err != nil {
-				t.Fatal(err)
-			}
+			w := httptest.NewRecorder()
+			req := httptest.NewRequest(http.MethodDelete, "/delete-item/"+test.urlKey, nil)
+			StoreHandlerTest.HandleDeleteItem(w, req)
+			resp := w.Result()
 
 			if resp.StatusCode != test.expectedStatus {
 				t.Fatalf("expected status: %d\treceived: %d", test.expectedStatus, resp.StatusCode)
