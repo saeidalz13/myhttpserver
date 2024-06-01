@@ -29,7 +29,7 @@ func NewServerHandler(db *db.Db) *ServerHandler {
 func (s *ServerHandler) HandleDeleteItem(w http.ResponseWriter, r *http.Request) {
 	key, err := urlutils.ExtractKey(r.URL.Path)
 	if err != nil {
-        log.Println(err)
+		log.Println(err)
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
@@ -47,7 +47,7 @@ func (s *ServerHandler) HandleGetItem(w http.ResponseWriter, r *http.Request) {
 	// httptest library. I manually extract the key here
 	key, err := urlutils.ExtractKey(r.URL.Path)
 	if err != nil {
-        log.Println(err)
+		log.Println(err)
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
