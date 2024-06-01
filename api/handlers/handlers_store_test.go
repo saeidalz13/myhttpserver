@@ -17,17 +17,9 @@ type Test struct {
 	contentType    string
 	expectedStatus int
 	urlKey         string
-	// expectedResp   string
 }
 
 func TestHandlePostItem(t *testing.T) {
-	// recorder records all the writes to w (http.ResponseWriter)
-	// on the server side. So this is useful for checking the headers!
-	// rr := httptest.NewRecorder()
-
-	// server := httptest.NewServer(http.HandlerFunc(StoreHandlerTest.HandlePostItem))
-	// defer server.Close()
-
 	validBodyReq := models.Item{
 		Key:   "somekey",
 		Value: "somevalue",
