@@ -5,29 +5,25 @@ import (
 	"fmt"
 	"io"
 	"log"
-	"myserver/db"
-	"myserver/internal/urlutils"
-	"myserver/models"
+	"myserver/api/db"
+	"myserver/api/internal/handlerutils"
+	"myserver/api/models"
 	"net/http"
 )
 
-const (
-	ErrUnableProcessReq = "sorry! unable to process the request at the moment"
-	ErrNoKeyProvidedUrl = "no key was provided in url path"
-)
 
-type ServerHandler struct {
+type StoreHandler struct {
 	Db *db.Db
 }
 
-func NewServerHandler(db *db.Db) *ServerHandler {
-	return &ServerHandler{
+func NewStoreHandler(db *db.Db) *StoreHandler {
+	return &StoreHandler{
 		Db: db,
 	}
 }
 
-func (s *ServerHandler) HandleDeleteItem(w http.ResponseWriter, r *http.Request) {
-	key, err := urlutils.ExtractKey(r.URL.Path)
+func (s *StoreHandler) HandleDeleteItem(w http.ResponseWriter, r *http.Request) {
+	key, err := handlerutils.ExtractKey(r.URL.Path)
 	if err != nil {
 		log.Println(err)
 		http.Error(w, err.Error(), http.StatusBadRequest)
@@ -42,10 +38,10 @@ func (s *ServerHandler) HandleDeleteItem(w http.ResponseWriter, r *http.Request)
 	w.WriteHeader(http.StatusNoContent)
 }
 
-func (s *ServerHandler) HandleGetItem(w http.ResponseWriter, r *http.Request) {
+func (s *StoreHandler) HandleGetItem(w http.ResponseWriter, r *http.Request) {
 	// I tried PathValue but seems like it's not compatible with
 	// httptest library. I manually extract the key here
-	key, err := urlutils.ExtractKey(r.URL.Path)
+	key, err := handlerutils.ExtractKey(r.URL.Path)
 	if err != nil {
 		log.Println(err)
 		http.Error(w, err.Error(), http.StatusBadRequest)
@@ -67,9 +63,8 @@ func (s *ServerHandler) HandleGetItem(w http.ResponseWriter, r *http.Request) {
 	w.Write(resp)
 }
 
-func (s *ServerHandler) HandlePostItem(w http.ResponseWriter, r *http.Request) {
-	contentType := r.Header.Get("Content-Type")
-	if contentType != "application/json" {
+func (s *StoreHandler) HandlePostItem(w http.ResponseWriter, r *http.Request) {
+	if !handlerutils.IsContentTypeJson(r.Header.Get("Content-Type")) {
 		http.Error(w, "invalid type of content in post request", http.StatusBadRequest)
 		return
 	}

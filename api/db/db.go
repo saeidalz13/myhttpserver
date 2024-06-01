@@ -2,7 +2,7 @@ package db
 
 import (
 	"errors"
-	"myserver/models"
+	"myserver/api/models"
 	"strings"
 )
 
@@ -10,18 +10,47 @@ var (
 	ErrKeyNotFound   = errors.New("key not found in json request")
 	ErrValueNotFound = errors.New("value not found in json request")
 	ErrValueNotInDb  = errors.New("value not found in database with provided key")
+
+	ErrNoEmail       = errors.New("email is not provided")
+	ErrNoPassword    = errors.New("password is not provided")
+	ErrEmailNotFound = errors.New("user with this email does not exist")
 )
+
+type passwordType []byte
+type emailType string
 
 type Db struct {
 	storage map[string]string
-	users   map[string]string
+	users   map[emailType]passwordType
 }
 
 func NewDb() *Db {
 	return &Db{
 		storage: make(map[string]string),
-		users:   make(map[string]string),
+		users:   make(map[emailType]passwordType),
 	}
+}
+
+func (d *Db) InsertUser(email string, password []byte) error {
+	if len(password) == 0 {
+		return ErrNoPassword
+	}
+
+	if email == "" {
+		return ErrNoEmail
+	}
+
+	d.users[emailType(email)] = passwordType(password)
+	return nil
+}
+
+func (d *Db) SelectUser(email string) ([]byte, error) {
+	password, prs := d.users[emailType(email)]
+	if !prs {
+		return nil, ErrEmailNotFound
+	}
+
+	return password, nil
 }
 
 func (d *Db) DeleteItem(key string) error {

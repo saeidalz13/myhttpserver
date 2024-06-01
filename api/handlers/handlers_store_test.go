@@ -5,36 +5,19 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"myserver/db"
-	"myserver/models"
+	"myserver/api/models"
 	"net/http"
 	"net/http/httptest"
-	"os"
 	"testing"
-	"time"
 )
-
-var client http.Client
-var serverHandler *ServerHandler
 
 type Test struct {
 	name           string
 	body           models.Item
-	header         string
+	contentType    string
 	expectedStatus int
 	urlKey         string
 	// expectedResp   string
-}
-
-func TestMain(m *testing.M) {
-	sh := NewServerHandler(db.NewDb())
-	serverHandler = sh
-
-	c := http.Client{
-		Timeout: time.Second * 5,
-	}
-	client = c
-	os.Exit(m.Run())
 }
 
 func TestHandlePostItem(t *testing.T) {
@@ -42,51 +25,56 @@ func TestHandlePostItem(t *testing.T) {
 	// on the server side. So this is useful for checking the headers!
 	// rr := httptest.NewRecorder()
 
-	server := httptest.NewServer(http.HandlerFunc(serverHandler.HandlePostItem))
-	defer server.Close()
+	// server := httptest.NewServer(http.HandlerFunc(StoreHandlerTest.HandlePostItem))
+	// defer server.Close()
 
 	validBodyReq := models.Item{
 		Key:   "somekey",
 		Value: "somevalue",
 	}
-	validHeader := "application/json"
+	validContentType := "application/json"
 
 	tests := []Test{
 		{
 			name:           "valid request",
 			body:           validBodyReq,
-			header:         validHeader,
+			contentType:    validContentType,
 			expectedStatus: http.StatusCreated,
 		},
 		{
 			name:           "wrong header",
 			body:           validBodyReq,
-			header:         "invalid",
+			contentType:    "invalid",
 			expectedStatus: http.StatusBadRequest,
 		},
 		{
 			name:           "no key in request body",
 			body:           models.Item{Value: "somevalue"},
-			header:         validHeader,
+			contentType:    validContentType,
 			expectedStatus: http.StatusBadRequest,
 		},
 		{
 			name:           "no value in request body",
 			body:           models.Item{Key: "somekey"},
-			header:         validHeader,
+			contentType:    validContentType,
 			expectedStatus: http.StatusBadRequest,
 		},
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
+			rr := httptest.NewRecorder()
 			body, err := json.Marshal(test.body)
 			if err != nil {
 				t.Fatal(err)
 			}
-			resp, err := client.Post(server.URL+"/store", test.header, bytes.NewBuffer(body))
-			if err != nil {
-				t.Fatal(err)
-			}
+			req := httptest.NewRequest(http.MethodPost, "/store", bytes.NewBuffer(body))
+			req.Header.Set("Content-Type", test.contentType)
+			StoreHandlerTest.HandlePostItem(rr, req)
+			resp := rr.Result()
+			// resp, err := HttpClientTest.Post(server.URL+"/store", test.header, bytes.NewBuffer(body))
+			// if err != nil {
+			// 	t.Fatal(err)
+			// }
 
 			if resp.StatusCode != test.expectedStatus {
 				t.Fatalf("expected status: %d\treceived: %d", test.expectedStatus, resp.StatusCode)
@@ -103,7 +91,7 @@ func TestHandlePostItem(t *testing.T) {
 }
 
 func TestHandleGetItem(t *testing.T) {
-	server := httptest.NewServer(http.HandlerFunc(serverHandler.HandleGetItem))
+	server := httptest.NewServer(http.HandlerFunc(StoreHandlerTest.HandleGetItem))
 	defer server.Close()
 
 	tests := []Test{
@@ -127,7 +115,7 @@ func TestHandleGetItem(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			url := fmt.Sprintf("%s/retrieve/%s", server.URL, test.urlKey)
-			resp, err := client.Get(url)
+			resp, err := HttpClientTest.Get(url)
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -146,7 +134,7 @@ func TestHandleGetItem(t *testing.T) {
 }
 
 func TestHandleDeleteItem(t *testing.T) {
-	server := httptest.NewServer(http.HandlerFunc(serverHandler.HandleDeleteItem))
+	server := httptest.NewServer(http.HandlerFunc(StoreHandlerTest.HandleDeleteItem))
 	defer server.Close()
 
 	tests := []Test{
@@ -175,7 +163,7 @@ func TestHandleDeleteItem(t *testing.T) {
 				t.Fatal(err)
 			}
 
-			resp, err := client.Do(req)
+			resp, err := HttpClientTest.Do(req)
 			if err != nil {
 				t.Fatal(err)
 			}

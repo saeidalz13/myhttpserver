@@ -1,4 +1,4 @@
-package urlutils
+package handlerutils
 
 import (
 	"errors"
@@ -16,4 +16,8 @@ func ExtractKey(url string) (string, error) {
 		return key, errors.New("no key has been provided")
 	}
 	return key, nil
+}
+
+func IsContentTypeJson(contentType string) bool {
+	return contentType == "application/json"
 }
