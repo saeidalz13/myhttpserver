@@ -101,25 +101,28 @@ func (a *AuthHandler) HandlePostLogin(w http.ResponseWriter, r *http.Request) {
 
 	reqBody, err := io.ReadAll(r.Body)
 	if err != nil {
+		log.Println(err)
 		http.Error(w, ErrUnableProcessReq, http.StatusServiceUnavailable)
 		return
 	}
 
 	var user models.User
 	if err := json.Unmarshal(reqBody, &user); err != nil {
+		log.Println(err)
 		http.Error(w, ErrInvalidUserJson, http.StatusBadRequest)
 		return
 	}
 
 	hashedPassword, err := a.Db.SelectUser(user.Email)
 	if err != nil {
+		log.Println(err)
 		http.Error(w, err.Error(), http.StatusNotFound)
 		return
 	}
 
 	if err := handlerutils.ComparePasswords(hashedPassword, user.Password); err != nil {
 		log.Println(err)
-		http.Error(w, ErrWrongPassword, http.StatusBadRequest)
+		http.Error(w, ErrWrongPassword, http.StatusNotFound)
 		return
 	}
 
@@ -145,6 +148,6 @@ func (a *AuthHandler) HandlePostLogin(w http.ResponseWriter, r *http.Request) {
 	// 	Secure:   true,
 	// 	SameSite: http.SameSiteStrictMode,
 	// })
-	w.WriteHeader(http.StatusCreated)
+	w.WriteHeader(http.StatusOK)
 	w.Write(resp)
 }
