@@ -44,6 +44,12 @@ func (s *StoreHandler) HandleGetItem(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// we are using a offset based data retrieval here
+	// we can also implement cursorbased
+	// if cursor was not sent, that means that it's the first 
+	// limit := r.URL.Query().Get("limit")
+	// offset := r.URL.Query().Get("offset")
+
 	respRaw := map[string]string{
 		"value": value,
 	}
